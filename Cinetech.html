@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>CineTech Dashboard</title>
+  <link rel="stylesheet" href="cinetech.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<aside class="sidebar">
+  <h2>CineTech</h2>
+  <button onclick="showSection('dashboard')">
+    <i class="fas fa-chart-line"></i> Dashboard
+  </button>
+  <button onclick="showSection('films')">
+    <i class="fas fa-film"></i> Films
+  </button>
+  <button onclick="showSection('directors')">
+    <i class="fas fa-user-tie"></i> Réalisateurs
+  </button>
+  <button onclick="toggleTheme()">
+    🌙 / ☀️ Mode
+  </button>
+</aside>
+
+<main>
+
+  <section id="dashboard" class="section active">
+    <h1>Dashboard</h1>
+
+    <div class="kpi">
+      <div class="card">
+        🎬 Total Films
+        <span id="totalFilms">0</span>
+      </div>
+      <div class="card">
+        🎥 Total Réalisateurs
+        <span id="totalDirectors">0</span>
+      </div>
+    </div>
+
+    <canvas id="filmsChart"></canvas>
+  </section>
+
+  <section id="films" class="section">
+    <h1>Gestion des Films</h1>
+
+    <form id="filmForm">
+      <input type="text" id="title" placeholder="Titre" required>
+      <input type="number" id="year" placeholder="Année" required>
+      <input type="text" id="genre" placeholder="Genre" required>
+      <button type="submit">
+        <i class="fas fa-plus"></i> Ajouter
+      </button>
+    </form>
+
+    <div class="search-box">
+  <i class="fas fa-search"></i>
+  <input type="text" id="searchFilm" placeholder="Rechercher un film">
+</div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Affiche</th>
+          <th>Titre</th>
+          <th>Année</th>
+          <th>Genre</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+    </table>
+    <div class="film-grid" id="filmList"></div>
+  </section>
+
+  <section id="directors" class="section">
+    <h1>Réalisateurs</h1>
+
+    <form id="directorForm">
+      <input type="text" id="directorName" placeholder="Nom du réalisateur" required>
+      <button type="submit">Ajouter</button>
+    </form>
+
+    <ul id="directorList"></ul>
+  </section>
+
+  <script>
+  document.querySelectorAll(".card").forEach(card => {
+    card.addEventListener("mousemove", e => {
+      const rect = card.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+
+      card.style.setProperty("--x", `${x}px`);
+      card.style.setProperty("--y", `${y}px`);
+    });
+
+    card.addEventListener("click", () => {
+      card.classList.add("neon-click");
+      setTimeout(() => card.classList.remove("neon-click"), 300);
+    });
+  });
+</script>
+
+
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="Javascript/NavigationSPA.js"></script>
+<script src="Javascript/Films.js"></script>
+<script src="Javascript/Realisateurs.js"></script>
+<script src="Javascript/Dashboard.js"></script>
+<script src="Javascript/API.js"></script>
+
+</body>
+</html>

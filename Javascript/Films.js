@@ -1,101 +1,150 @@
 /* =========================================
-   GESTION DES FILMS (CRUD COMPLET)
+   GESTION DES FILMS
    ========================================= */
 
-// Récupération depuis le localStorage
 let films = JSON.parse(localStorage.getItem("films")) || [];
 
-// Éléments HTML
 const filmForm = document.getElementById("filmForm");
 const filmList = document.getElementById("filmList");
-const editIndexInput = document.getElementById("editIndex");
+const filmSearch = document.getElementById("filmSearch");
+const filmSort = document.getElementById("filmSort");
 
-/*
-  Afficher tous les films
-*/
-function displayFilms(filter = "") {
+/* ============================= */
+/* POPUP UTILITAIRE */
+/* ============================= */
+function showPopup(message, confirm = false, callback = null) {
+  const popup = document.getElementById("popup");
+  const msg = document.getElementById("popupMessage");
+  const btnConfirm = document.getElementById("popupConfirm");
+  const btnCancel = document.getElementById("popupCancel");
+
+  msg.textContent = message;
+  popup.classList.remove("hidden");
+
+  btnCancel.style.display = confirm ? "inline-block" : "none";
+
+  btnConfirm.onclick = () => {
+    popup.classList.add("hidden");
+    if (callback) callback(true);
+  };
+
+  btnCancel.onclick = () => {
+    popup.classList.add("hidden");
+    if (callback) callback(false);
+  };
+}
+
+/* ============================= */
+/* AFFICHAGE DES FILMS */
+/* ============================= */
+function displayFilms(list = films) {
   filmList.innerHTML = "";
 
-  films
-    .filter(f =>
-      f.title.toLowerCase().includes(filter.toLowerCase())
-    )
-    .forEach((film, index) => {
-      filmList.innerHTML += `
-        <div class="film-card">
-          <img src="${film.poster || 'https://via.placeholder.com/300x450'}">
-          <h3>${film.title}</h3>
-          <p>${film.year} • ${film.genre}</p>
-
-          <button onclick="editFilm(${index})">✏️</button>
-          <button onclick="confirmDeleteFilm(${index})">🗑️</button>
-        </div>
-      `;
-    });
+  list.forEach((film, index) => {
+    filmList.innerHTML += `
+      <div class="film-card">
+        <img src="${film.poster || 'https://via.placeholder.com/220x260'}">
+        <h3>${film.title}</h3>
+        <p>${film.year}</p>
+        <p>${film.genre || ""}</p>
+        <button onclick="editFilm(${index})">✏️</button>
+        <button onclick="confirmDeleteFilm(${index})">🗑️</button>
+      </div>
+    `;
+  });
 
   updateDashboard();
 }
 
-/*
-  Ajouter ou modifier un film
-*/
+/* ============================= */
+/* AJOUT / MODIFICATION */
+/* ============================= */
 filmForm.addEventListener("submit", e => {
   e.preventDefault();
 
-  const title = document.getElementById("title").value;
+  const title = document.getElementById("title").value.trim();
   const year = document.getElementById("year").value;
   const genre = document.getElementById("genre").value;
-  const editIndex = editIndexInput.value;
+  const editIndex = document.getElementById("editIndex").value;
+
+  if (!title || !year) return;
 
   if (editIndex === "") {
-    // AJOUT
-    const film = { title, year, genre, poster: "" };
-    films.push(film);
+    films.push({ title, year, genre });
     fetchPoster(title, films.length - 1);
   } else {
-    // MODIFICATION
-    films[editIndex].title = title;
-    films[editIndex].year = year;
-    films[editIndex].genre = genre;
-    editIndexInput.value = "";
+    films[editIndex] = { ...films[editIndex], title, year, genre };
   }
 
   localStorage.setItem("films", JSON.stringify(films));
   filmForm.reset();
+  document.getElementById("editIndex").value = "";
   displayFilms();
 });
 
-/*
-  Pré-remplir le formulaire pour modifier
-*/
+/* ============================= */
+/* EDIT */
+/* ============================= */
 function editFilm(index) {
-  const film = films[index];
-
-  document.getElementById("title").value = film.title;
-  document.getElementById("year").value = film.year;
-  document.getElementById("genre").value = film.genre;
-  editIndexInput.value = index;
+  document.getElementById("title").value = films[index].title;
+  document.getElementById("year").value = films[index].year;
+  document.getElementById("genre").value = films[index].genre || "";
+  document.getElementById("editIndex").value = index;
 }
 
-/*
-  Confirmation intégrée (pas alert brutal)
-*/
+/* ============================= */
+/* DELETE AVEC CONFIRMATION */
+/* ============================= */
 function confirmDeleteFilm(index) {
-  if (confirm(`Supprimer le film "${films[index].title}" ?`)) {
-    films.splice(index, 1);
-    localStorage.setItem("films", JSON.stringify(films));
-    displayFilms();
-  }
+  showPopup("Confirmer la suppression du film ?", true, confirmed => {
+    if (confirmed) {
+      films.splice(index, 1);
+      localStorage.setItem("films", JSON.stringify(films));
+      displayFilms();
+    }
+  });
 }
 
-/*
-  Recherche globale (films + réalisateurs)
-*/
-const globalSearch = document.getElementById("globalSearch");
-
-globalSearch.addEventListener("input", e => {
-  displayFilms(e.target.value);
+/* ============================= */
+/* RECHERCHE FILMS */
+/* ============================= */
+filmSearch.addEventListener("input", () => {
+  const value = filmSearch.value.toLowerCase();
+  const filtered = films.filter(f =>
+    f.title.toLowerCase().includes(value)
+  );
+  displayFilms(filtered);
 });
 
-// Initialisation
+/* ============================= */
+/* TRI FILMS */
+/* ============================= */
+filmSort.addEventListener("change", () => {
+  let sorted = [...films];
+
+  if (filmSort.value === "az") {
+    sorted.sort((a, b) => a.title.localeCompare(b.title));
+  }
+
+  if (filmSort.value === "year") {
+    sorted.sort((a, b) => a.year - b.year);
+  }
+
+  displayFilms(sorted);
+});
+
+/* ============================= */
+/* RECHERCHE GLOBALE */
+/* ============================= */
+document.getElementById("globalSearch").addEventListener("input", e => {
+  const value = e.target.value.toLowerCase();
+  const filtered = films.filter(f =>
+    f.title.toLowerCase().includes(value)
+  );
+  displayFilms(filtered);
+});
+
+/* ============================= */
+/* INIT */
+/* ============================= */
 displayFilms();

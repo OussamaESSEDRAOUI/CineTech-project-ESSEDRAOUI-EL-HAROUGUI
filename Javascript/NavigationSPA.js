@@ -1,9 +1,9 @@
 /* =========================================
-   NAVIGATION SPA + SIDEBAR + THÈME + RECHERCHE
+   NAVIGATION SPA – CineTech
    ========================================= */
 
 /* ============================= */
-/* AFFICHER UNE SECTION (SPA) */
+/* AFFICHER UNE SECTION */
 /* ============================= */
 function showSection(id) {
   document.querySelectorAll(".section").forEach(section => {
@@ -13,21 +13,18 @@ function showSection(id) {
   const target = document.getElementById(id);
   if (target) target.classList.add("active");
 
-  // Met à jour le dashboard si nécessaire
-  if (id === "dashboard") {
-    updateDashboard();
-  }
+  if (id === "dashboard") updateDashboard();
 }
 
 /* ============================= */
-/* TOGGLE THÈME */
+/* THÈME SOMBRE / CLAIR */
 /* ============================= */
 function toggleTheme() {
   document.body.classList.toggle("light");
 }
 
 /* ============================= */
-/* TOGGLE SIDEBAR */
+/* SIDEBAR */
 /* ============================= */
 const toggleSidebarBtn = document.getElementById("toggleSidebar");
 const sidebar = document.querySelector(".sidebar");
@@ -37,37 +34,37 @@ toggleSidebarBtn.addEventListener("click", () => {
 });
 
 /* ============================= */
-/* RECHERCHE GLOBALE (SPA) */
+/* RECHERCHE GLOBALE */
 /* ============================= */
 const globalSearch = document.getElementById("globalSearch");
 
 globalSearch.addEventListener("input", e => {
-  const value = e.target.value.toLowerCase();
+  const value = e.target.value.toLowerCase().trim();
 
-  // Recherche films
-  const filteredFilms = films.filter(f =>
+  if (value === "") {
+    displayFilms();
+    displayDirectors();
+    return;
+  }
+
+  const filmResults = films.filter(f =>
     f.title.toLowerCase().includes(value)
   );
 
-  // Recherche réalisateurs
-  const filteredDirectors = directors.filter(d =>
+  const directorResults = directors.filter(d =>
     d.toLowerCase().includes(value)
   );
 
-  if (value !== "") {
-    // Afficher films si trouvés
-    if (filteredFilms.length > 0) {
-      showSection("films");
-      displayFilms(filteredFilms);
-    }
-    // Sinon afficher réalisateurs
-    else if (filteredDirectors.length > 0) {
-      showSection("directors");
-      displayDirectors(filteredDirectors);
-    }
-  } else {
-    // Reset affichage
-    displayFilms();
-    displayDirectors();
+  if (filmResults.length > 0) {
+    showSection("films");
+    displayFilms(filmResults);
+  }
+  else if (directorResults.length > 0) {
+    showSection("directors");
+    displayDirectors(directorResults);
+  }
+  else {
+    showSection("films");
+    displayFilms([]);
   }
 });

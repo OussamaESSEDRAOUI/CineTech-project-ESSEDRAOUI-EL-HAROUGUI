@@ -8,36 +8,54 @@ let chartInstance = null;
 /* MISE À JOUR DASHBOARD */
 /* ============================= */
 function updateDashboard() {
-  // Sécurité : éviter erreurs si sections non encore chargées
-  if (!document.getElementById("totalFilms")) return;
+  const totalFilmsEl = document.getElementById("totalFilms");
+  const totalDirectorsEl = document.getElementById("totalDirectors");
+  const canvas = document.getElementById("filmsChart");
 
-  document.getElementById("totalFilms").textContent = films.length;
-  document.getElementById("totalDirectors").textContent = directors.length;
+  if (!totalFilmsEl || !totalDirectorsEl || !canvas) return;
 
-  const ctx = document.getElementById("filmsChart");
-  if (!ctx) return;
+  totalFilmsEl.textContent = films.length;
+  totalDirectorsEl.textContent = directors.length;
 
-  // Détruire l'ancien graphique
   if (chartInstance) chartInstance.destroy();
 
-  chartInstance = new Chart(ctx, {
+  if (films.length === 0) return;
+
+  const labels = films.map(f => f.title);
+  const years = films.map(f => f.year);
+  const ratings = films.map(f => f.rating || 0);
+
+  chartInstance = new Chart(canvas, {
     type: "bar",
     data: {
-      labels: films.map(f => f.title),
-      datasets: [{
-        label: "Année de sortie",
-        data: films.map(f => f.year),
-        backgroundColor: "#9b6bff"
-      }]
+      labels,
+      datasets: [
+        {
+          label: "Année de sortie",
+          data: years,
+          backgroundColor: "#4f8cff"
+        },
+        {
+          label: "Rating IMDb",
+          data: ratings,
+          backgroundColor: "#9b6bff"
+        }
+      ]
     },
     options: {
       responsive: true,
       plugins: {
-        legend: { display: true }
+        legend: {
+          labels: { color: "#999" }
+        }
       },
       scales: {
         y: {
-          beginAtZero: false
+          beginAtZero: true,
+          ticks: { color: "#999" }
+        },
+        x: {
+          ticks: { color: "#999" }
         }
       }
     }

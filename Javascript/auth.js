@@ -44,7 +44,7 @@ loginForm.addEventListener("submit", e => {
   const user = users.find(u => u.username === username);
 
   if (!user) {
-    showPopup("Compte inexistant. Veuillez vous inscrire.");
+    showPopup("Compte inexistant. Veuillez vous inscrire d'abord.");
     return;
   }
 

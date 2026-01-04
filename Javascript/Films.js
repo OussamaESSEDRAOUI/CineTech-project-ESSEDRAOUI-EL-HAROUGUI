@@ -1,9 +1,17 @@
-/* =========================================
-   GESTION DES FILMS – CineTech
-   ========================================= */
+/* gestion des films – CineTech
+   ce code js gère:
+   1. l’ajout de films
+   2. la modification
+   3. la suppression
+   4. l’affichage
+   5. la recherche et le tri
+   6. la liaison avec l’API OMDB */
+
+/* les données du films sont récupérées depuis le localStorage */
 
 let films = JSON.parse(localStorage.getItem("films")) || [];
 
+/* references DOM */
 const filmForm = document.getElementById("filmForm");
 const filmList = document.getElementById("filmList");
 const filmSearch = document.getElementById("filmSearch");
@@ -12,9 +20,7 @@ const filmNotFound = document.getElementById("filmNotFound");
 
 const directorSelect = document.getElementById("filmDirector");
 
-/* ============================= */
-/* SYNC RÉALISATEURS → SELECT */
-/* ============================= */
+/* synchronisation des realisateurs uniques(met à jour la liste déroulante) */
 function updateDirectorSelect() {
   directorSelect.innerHTML = `<option value="">Réalisateur</option>`;
   directors.forEach(d => {
@@ -22,47 +28,54 @@ function updateDirectorSelect() {
   });
 }
 
-/* ============================= */
-/* POPUP UTILITAIRE */
-/* ============================= */
+/* popup utilitaire de confirmation et d'erreur
+   utilisé pour:
+   - les confirmations
+   - les messages informatifs */
 function showPopup(message, confirm = false, callback = null) {
   const popup = document.getElementById("popup");
   const msg = document.getElementById("popupMessage");
   const btnConfirm = document.getElementById("popupConfirm");
   const btnCancel = document.getElementById("popupCancel");
 
+  // texte du message
   msg.textContent = message;
+  // affichage du popup
   popup.classList.remove("hidden");
+  // bouton annuler visible uniquement en mode confirmation
   btnCancel.style.display = confirm ? "inline-block" : "none";
 
+  // bouton ok(Confirmation)
   btnConfirm.onclick = () => {
     popup.classList.add("hidden");
     if (callback) callback(true);
   };
 
+  // bouton Annuler
   btnCancel.onclick = () => {
     popup.classList.add("hidden");
     if (callback) callback(false);
   };
 }
 
-/* ============================= */
-/* AFFICHAGE DES FILMS */
-/* ============================= */
+/* affichage des films */
 function displayFilms(list = films) {
+  // nettoyage de la liste
   filmList.innerHTML = "";
 
-  if (list.length === 0) {
+  // en cas aucun résultat
+  if (!list || list.length === 0) {
     filmNotFound.classList.remove("hidden");
     return;
   }
 
   filmNotFound.classList.add("hidden");
 
+  // génération dynamique des cartes films
   list.forEach((film, index) => {
     filmList.innerHTML += `
       <div class="film-card">
-        <img src="${film.poster || 'https://via.placeholder.com/80x120?text=No+Image'}">
+        <img src="${film.poster || 'https://via.placeholder.com/80x120?text=No+Image'}" alt="${film.title}">
         <div>
           <h3>${film.title}</h3>
           <p>🎬 ${film.genre || "—"} | ${film.year}</p>
@@ -77,16 +90,17 @@ function displayFilms(list = films) {
     `;
   });
 
+  // une mise à jour du dashboard
   updateDashboard();
 }
 
-/* ============================= */
-/* AJOUT / MODIFICATION */
-/* ============================= */
+/* ajout et modification du film */
 filmForm.addEventListener("submit", e => {
   e.preventDefault();
 
+  // un index utilisé uniquement en mode édition
   const index = document.getElementById("editIndex").value;
+  // récupération des valeurs des champs 
   const title = document.getElementById("title").value.trim();
   const year = document.getElementById("year").value;
   const genre = document.getElementById("genre").value.trim();
@@ -94,38 +108,35 @@ filmForm.addEventListener("submit", e => {
   const rating = document.getElementById("rating").value;
   const poster = document.getElementById("poster").value.trim();
 
+  // sécurité(validation minimale des champs obligatoires)
   if (!title || !year) return;
 
-  const filmData = {
-    title,
-    year,
-    genre,
-    director,
-    rating,
-    poster
-  };
+  const filmData = { title, year, genre, director, rating, poster };
 
+  /* l'ajout */
   if (index === "") {
     films.push(filmData);
+    // en cas si aucune affiche inseré par l’utilisateur, appel API OMDB
     const newIndex = films.length - 1;
 
     if (!poster) fetchPoster(title, newIndex);
-  } else {
+  } 
+  /* la modification */
+  else {
     films[index] = filmData;
-
     if (!poster) fetchPoster(title, index);
   }
 
+  /* sauvegarde dans le localStorage */
   localStorage.setItem("films", JSON.stringify(films));
+  // reset formulaire
   filmForm.reset();
   document.getElementById("editIndex").value = "";
 
   displayFilms();
 });
 
-/* ============================= */
-/* ÉDITION */
-/* ============================= */
+/* édition d’un film(affiche le formulaire) */
 function editFilm(index) {
   const film = films[index];
 
@@ -140,9 +151,7 @@ function editFilm(index) {
   showSection("films");
 }
 
-/* ============================= */
-/* SUPPRESSION */
-/* ============================= */
+/* suppression d’un film(avec confirmation) */
 function confirmDeleteFilm(index) {
   showPopup("Supprimer ce film ?", true, confirmed => {
     if (confirmed) {
@@ -153,45 +162,29 @@ function confirmDeleteFilm(index) {
   });
 }
 
-/* ============================= */
-/* RECHERCHE */
-/* ============================= */
+/* recherche des films */
 filmSearch.addEventListener("input", () => {
-  const value = filmSearch.value.toLowerCase();
-
+  const value = filmSearch.value.toLowerCase().trim();
   const filtered = films.filter(f =>
     f.title.toLowerCase().includes(value)
   );
-
   displayFilms(filtered);
 });
 
-/* ============================= */
-/* TRI */
-/* ============================= */
+/* tri des films */
 filmSort.addEventListener("change", () => {
   let sorted = [...films];
 
   switch (filmSort.value) {
-    case "az":
-      sorted.sort((a, b) => a.title.localeCompare(b.title));
-      break;
-    case "za":
-      sorted.sort((a, b) => b.title.localeCompare(a.title));
-      break;
-    case "year":
-      sorted.sort((a, b) => b.year - a.year);
-      break;
-    case "rating":
-      sorted.sort((a, b) => (b.rating || 0) - (a.rating || 0));
-      break;
+    case "az": sorted.sort((a, b) => a.title.localeCompare(b.title)); break;
+    case "za": sorted.sort((a, b) => b.title.localeCompare(a.title)); break;
+    case "year": sorted.sort((a, b) => b.year - a.year); break;
+    case "rating": sorted.sort((a, b) => (b.rating || 0) - (a.rating || 0)); break;
   }
 
   displayFilms(sorted);
 });
 
-/* ============================= */
-/* INIT */
-/* ============================= */
+/* initialisation au niveau de chargement */
 updateDirectorSelect();
 displayFilms();
